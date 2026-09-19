@@ -29,11 +29,14 @@ def make_features(df):
             df[v] = np.nan
 
     # START-style flags
-    df['start_resp_high'] = (df.get('resprate', 0) > 30).astype(float)
-    df['start_resp_zero'] = (df.get('resprate', 1) == 0).astype(float)
-    df['start_hr_zero'] = (df.get('heartrate', 1) == 0).astype(float)
-    df['start_sbp_low'] = (df.get('sbp', 100) < 90).astype(float)
-    df['start_motor_low'] = (df.get('gcs_motor', 6) < 6).astype(float)
+    if 'gcs_motor' not in df.columns:
+        df['gcs_motor'] = np.nan
+
+    df['start_resp_high'] = (df['resprate'].fillna(0) > 30).astype(float)
+    df['start_resp_zero'] = (df['resprate'].fillna(1) == 0).astype(float)
+    df['start_hr_zero'] = (df['heartrate'].fillna(1) == 0).astype(float)
+    df['start_sbp_low'] = (df['sbp'].fillna(100) < 90).astype(float)
+    df['start_motor_low'] = (df['gcs_motor'].fillna(6) < 6).astype(float)
 
     # Chief complaint flags
     if 'chiefcomplaint' in df.columns:

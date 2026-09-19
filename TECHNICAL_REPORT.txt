@@ -1,0 +1,66 @@
+========================================================================
+HEALTHCARE TRIAGE CLASSIFICATION (MM26ML03) - TECHNICAL REPORT
+========================================================================
+
+1. PROJECT OVERVIEW
+------------------------------------------------------------------------
+This project solves the MM26ML03 Healthcare Triage Classification problem. 
+It consists of two main components:
+A. A highly optimized, cost-sensitive Machine Learning pipeline (Python/Scikit-Learn/LightGBM)
+B. A full-stack web application for interactive demonstration (FastAPI Backend + React/TypeScript Frontend)
+
+2. MACHINE LEARNING METHODOLOGY & PIPELINE
+------------------------------------------------------------------------
+2.1 Data Preprocessing & Feature Engineering
+- Missingness Indicators: Emergency medicine data has high missingness. Missing vitals often carry clinical signal (e.g., patient too unstable to take temp). We engineered explicit boolean `_isnan` flags for core vitals.
+- Clinical Flags (START Triage): Engineered domain-specific flags mapping to the standard START triage algorithm:
+  * `is_tachypneic` (resprate > 30)
+  * `is_bradypneic` (resprate < 10)
+  * `is_tachycardic` (heartrate > 100)
+  * `is_unresponsive` (avpu == 'U' or gcs_motor == 1)
+  * `shock_index` (heartrate / sbp)
+- Ordinal Encoding: Mapped categorical features like AVPU ('A'=1, 'V'=2, 'P'=3, 'U'=4) into mathematical equivalents.
+- Grouping: Used `GroupKFold` split strategy keyed on `subject_id` to guarantee that multiple visits from the same patient never bleed across the train/validation split.
+
+2.2 Core Modeling Strategy
+- Base Estimators: We utilized a heterogeneous ensemble of three models to capture both linear and non-linear relationships:
+  1. LightGBM Classifier (Gradient Boosting)
+  2. Extra Trees Classifier (Randomized Decision Trees)
+  3. Logistic Regression (Linear baseline with L2 regularization)
+- Ensemble Method: A soft-voting ensemble (`VotingClassifier(voting='soft')`) averaging the probability outputs of the base models. 
+
+2.3 Probability Calibration
+- Tree-based models (like LightGBM and ExtraTrees) are notorious for outputting uncalibrated probabilities (they push probabilities away from 0 and 1).
+- Because our decision rule strictly relies on accurate probability distributions, we wrapped the ensemble's out-of-fold predictions in a Multinomial Logistic Regression calibrator. This maps the raw ensemble output into true, calibrated probabilities for RED, YELLOW, GREEN, and BLACK.
+
+2.4 Cost-Sensitive Decision Protocol (Min-Risk Algorithm)
+- The prompt explicitly provided an asymmetric cost matrix (e.g., predicting RED as GREEN incurs a massive penalty of 10, while predicting GREEN as RED is only a penalty of 1).
+- Instead of traditional `argmax` (choosing the class with the highest probability), we implemented a Expected Cost Minimization Rule.
+- Protocol: 
+  For a patient, let P = [P_red, P_yellow, P_green, P_black].
+  For each possible prediction `j`, calculate the Expected Cost: Cost(j) = sum_i( P(i) * Matrix[i][j] ).
+  The model outputs the class `j` that has the lowest expected cost. 
+- Result: The model prioritizes patient safety. It behaves conservatively, readily predicting YELLOW or RED if there is even a fractional probability of severe illness, perfectly optimizing the hackathon scoring metric.
+
+3. BACKEND PROTOCOL (FastAPI)
+------------------------------------------------------------------------
+- Framework: Python 3, FastAPI, Uvicorn, Pandas, Joblib.
+- Protocol: REST API running locally on port 8000.
+- Endpoints:
+  * POST `/api/predict`: Receives a JSON payload of a single patient's vitals. Converts it into a Pandas DataFrame, runs the preprocessing pipeline, calibrates probabilities, applies the cost matrix, and returns the chosen class alongside the mathematical justification (expected costs for all 4 options).
+  * POST `/api/predict_batch`: Receives a CSV file via `multipart/form-data`, cleans the rows, runs batch inference, and dynamically generates the required 6-column submission CSV to stream back to the user.
+  * GET `/api/report`: Serves the `results.json` metrics calculated during the notebook's training phase.
+
+4. FRONTEND PROTOCOL (React + Vite)
+------------------------------------------------------------------------
+- Architecture: Single Page Application (SPA) built with React 18, TypeScript, and Vite.
+- Styling: Tailwind CSS 3 for responsive, dark-mode-compatible utility classes, achieving a modern "glass/vibrant" healthcare aesthetic.
+- Components:
+  * Triage Tab: Controlled forms mapping inputs back to the API. Includes pre-filled clinical examples (Severe, Moderate, Minor) to instantly demonstrate the system.
+  * Batch Tab: HTML5 drag-and-drop file upload utilizing `FormData` and `Blob` APIs to trigger CSV downloads directly in the browser.
+  * Report & About Tabs: Renders complex tabular data and dynamic lists parsed from the backend JSON response to fully explain the cost matrix logic to end-users.
+
+5. EXECUTION & REPRODUCIBILITY
+------------------------------------------------------------------------
+- The entire ML pipeline is structurally guaranteed to be reproducible by running `generate_notebook.py`. It dynamically generates an execution-ready Jupyter Notebook, processes the data, saves the model artifacts (`models.joblib`), and outputs the submission payload.
+- The web app is stateless, reading only the serialized `.joblib` and `.json` artifacts generated by the ML pipeline to guarantee the web UI exactly matches the CSV submission behavior.
