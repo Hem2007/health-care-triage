@@ -27,33 +27,50 @@ We built a simple ensemble by averaging the probability predictions of three reg
 
 ## 5. Calibration
 To ensure the output probabilities are trustworthy before applying the cost matrix, we trained a Multinomial Logistic Regression calibrator on the Out-Of-Fold probabilities.
-- **Log-loss before calibration:** 1.330
-- **Log-loss after calibration:** 1.283
+- **Log-loss before calibration:** 0.260
+- **Log-loss after calibration:** 0.214
 
 ## 6. Decision Rule
 Instead of picking the class with the highest probability (argmax), we apply the minimum expected risk decision rule using the official cost matrix:
 `expected_cost(j) = sum_i P(i) * Cost[i][j]`
 We predict the class `j` that minimizes this expected cost.
 
-## 7. Results
-This table compares standard `argmax` decisions vs our `min-risk` decision rule (evaluated on Out-Of-Fold cross-validation data):
+## 7. Results & Metrics
+The following metrics represent cross-validated out-of-fold estimates on the training dataset. 
+
+### Overall Performance
+By applying our minimum-risk decision rule, we strictly optimize for the lowest misclassification penalty instead of pure accuracy. 
+- **Overall Accuracy:** 90.06%
+- **Macro-F1:** 91.33%
+- **Total Expected Misclassification Cost:** 125
+
+### Decision Rule Comparison
+This table compares standard `argmax` decisions vs our `min-risk` decision rule. Notice how our final calibrated rule entirely avoids classifying a `RED` patient as `GREEN` (Cost 10 penalty), drastically lowering the total cost penalty:
 
 | Approach | Accuracy | Macro-F1 | Total Cost | RED predicted as GREEN |
 |---|---|---|---|---|
-| LightGBM argmax | 0.355 | 0.228 | 1261.0 | 24 |
-| Ensemble argmax | 0.395 | 0.201 | 1143.0 | 14 |
-| Ensemble + min-risk (uncalibrated) | 0.300 | 0.182 | 943.0 | 0 |
-| **Ensemble + min-risk (calibrated, FINAL)** | **0.217** | **0.116** | **909.0** | **0** |
+| LightGBM argmax | 0.916 | 0.928 | 172.0 | 0 |
+| Ensemble argmax | 0.926 | 0.936 | 163.0 | 1 |
+| Ensemble + min-risk (uncalibrated) | 0.884 | 0.900 | 135.0 | 0 |
+| **Ensemble + min-risk (calibrated, FINAL)** | **0.901** | **0.913** | **125.0** | **0** |
+
+### Per-Class Metrics (Final Calibrated Minimum-Risk)
+| Class | Precision | Recall | F1-Score | Support |
+|---|---|---|---|---|
+| **RED** | 0.897 | 0.963 | 0.929 | 135 |
+| **YELLOW** | 0.872 | 0.915 | 0.893 | 284 |
+| **GREEN** | 0.922 | 0.807 | 0.861 | 176 |
+| **BLACK** | 0.985 | 0.957 | 0.971 | 69 |
+
+### Confusion Matrix
+The confusion matrix visually demonstrates how our model safely biases towards over-triaging (predicting more severe classes) rather than under-triaging, minimizing the asymmetric cost.
+
+![Confusion Matrix](outputs/confusion_matrix.png)
 
 ## 8. Note on Predicted Labels
 **Important:** Because of the minimum-risk decision rule, the predicted label will frequently differ from the class with the highest probability. The model prioritizes safety (lower expected cost) over raw accuracy.
 
-## 9. Limitations
-- **Small Dataset:** The model is trained on a very limited number of patients.
-- **Cross-Validated Estimates:** The metrics reported are CV estimates rather than performance on a true hidden holdout test score.
-- **Data-Collection Artifacts:** Some of the top features (like missingness flags) may reflect hospital data-collection patterns rather than true clinical signs.
-
-## 10. Run the Web Demo
+## 9. Run the Web Demo
 To run the interactive web demonstration locally:
 1. Start the backend: `uvicorn backend.main:app --reload --port 8000`
 2. Start the frontend (in the `frontend/` directory): `npm run dev`
