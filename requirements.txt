@@ -1,0 +1,17 @@
+pandas
+numpy
+scikit-learn>=1.3
+lightgbm
+matplotlib
+shap
+joblib
+nbformat
+nbconvert
+ipykernel
+jupyter
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pytest
+httpx

@@ -1,0 +1,127 @@
+{
+  "comparison": {
+    "LGB_argmax": {
+      "Accuracy": 0.35542168674698793,
+      "Macro-F1": 0.22801082711188167,
+      "Weighted-F1": 0.3052408448820066,
+      "Cost": 1261.0,
+      "R_as_G": 24.0,
+      "R_as_B": 4.0
+    },
+    "Ens_argmax": {
+      "Accuracy": 0.39457831325301207,
+      "Macro-F1": 0.20119235320052428,
+      "Weighted-F1": 0.30165906362584627,
+      "Cost": 1143.0,
+      "R_as_G": 14.0,
+      "R_as_B": 2.0
+    },
+    "Ens_minrisk": {
+      "Accuracy": 0.2996987951807229,
+      "Macro-F1": 0.18171787912065143,
+      "Weighted-F1": 0.24639331833685366,
+      "Cost": 943.0,
+      "R_as_G": 0.0,
+      "R_as_B": 1.0
+    },
+    "CalEns_minrisk": {
+      "Accuracy": 0.21686746987951808,
+      "Macro-F1": 0.11612782336453706,
+      "Weighted-F1": 0.1253040079714876,
+      "Cost": 909.0,
+      "R_as_G": 0.0,
+      "R_as_B": 0.0
+    }
+  },
+  "final_metrics": {
+    "accuracy": 0.21686746987951808,
+    "macro_f1": 0.11612782336453706,
+    "weighted_f1": 0.1253040079714876,
+    "cost": 909
+  },
+  "per_class": {
+    "RED": {
+      "precision": 0.2003338898163606,
+      "recall": 0.8888888888888888,
+      "f1-score": 0.32697547683923706,
+      "support": 135.0
+    },
+    "YELLOW": {
+      "precision": 0.36923076923076925,
+      "recall": 0.08450704225352113,
+      "f1-score": 0.13753581661891118,
+      "support": 284.0
+    },
+    "GREEN": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 176.0
+    },
+    "BLACK": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 69.0
+    },
+    "accuracy": 0.21686746987951808,
+    "macro avg": {
+      "precision": 0.14239116476178246,
+      "recall": 0.2433489827856025,
+      "f1-score": 0.11612782336453706,
+      "support": 664.0
+    },
+    "weighted avg": {
+      "precision": 0.19865453853425774,
+      "recall": 0.21686746987951808,
+      "f1-score": 0.1253040079714876,
+      "support": 664.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      120,
+      15,
+      0,
+      0
+    ],
+    [
+      260,
+      24,
+      0,
+      0
+    ],
+    [
+      158,
+      18,
+      0,
+      0
+    ],
+    [
+      61,
+      8,
+      0,
+      0
+    ]
+  ],
+  "logloss_before": 1.3300341032467906,
+  "logloss_after": 1.2831084347081556,
+  "class_counts": {
+    "RED": 135,
+    "YELLOW": 284,
+    "GREEN": 176,
+    "BLACK": 69
+  },
+  "top_features": {
+    "dbp": 663.5333333333333,
+    "vs_temperature_max": 494.8,
+    "vs_o2sat_max": 467.6666666666667,
+    "vs_o2sat_min": 456.53333333333336,
+    "o2sat": 439.26666666666665,
+    "vs_resprate_min": 409.53333333333336,
+    "vs_resprate_max": 404.8,
+    "temperature": 400.3333333333333,
+    "vs_heartrate_max": 339.6,
+    "pain_score": 336.2
+  }
+}
